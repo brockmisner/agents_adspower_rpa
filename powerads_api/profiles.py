@@ -2,6 +2,7 @@ from .api_handler import make_request
 import json
 import requests
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -345,25 +346,50 @@ class ProfileManager:
         Compara os perfis armazenados no cache com os retornados pela API
         para identificar quais perfis foram apagados.
         """
-        # Buscar os perfis ativos mais recentes da API
-        active_profiles = self.get_all_profiles(force_refresh=True)
-        active_ids = {profile["user_id"] for profile in active_profiles}
+        try:
+            # Verificar se temos perfis no cache
+            if not hasattr(self.cache, 'profiles_cache') or not self.cache.profiles_cache:
+                logger.info("Cache de perfis vazio ou não inicializado")
+                return set()
 
-        # Obter perfis do cache
-        cached_ids = set(self.cache["profiles"].keys())
+            # Buscar os perfis ativos mais recentes da API
+            active_profiles = self.get_all_profiles(force_refresh=True)
+            if not active_profiles:
+                logger.warning("Não foi possível obter perfis ativos da API")
+                return set()
 
-        # Perfis deletados = aqueles que estavam no cache mas não aparecem mais na API
-        deleted_profiles = cached_ids - active_ids
+            active_ids = {profile["user_id"] for profile in active_profiles}
 
-        if deleted_profiles:
-            logger.info(f"Perfis deletados detectados: {deleted_profiles}")
-            # Log detalhado dos perfis deletados
-            for profile_id in deleted_profiles:
-                if profile_id in self.cache["profiles"]:
-                    profile_info = self.cache["profiles"][profile_id]
-                    logger.info(f"Perfil deletado: Nome: {profile_info.get('name')}, "
-                                f"ID: {profile_id}")
+            # Obter perfis do cache (certificando-se de que é um dicionário)
+            cached_profiles = self.cache.profiles_cache
+            if not isinstance(cached_profiles, dict):
+                logger.warning(
+                    f"Cache de perfis não é um dicionário: {type(cached_profiles)}")
+                return set()
+
+            cached_ids = set(cached_profiles.keys())
+
+            # Perfis deletados = aqueles que estavam no cache mas não aparecem mais na API
+            deleted_profiles = cached_ids - active_ids
+
+            if deleted_profiles:
+                logger.info(f"Perfis deletados detectados: {deleted_profiles}")
+            else:
+                logger.info("Nenhum perfil deletado identificado.")
+
+            return deleted_profiles
+        except Exception as e:
+            logger.error(f"Erro ao verificar perfis deletados: {str(e)}")
+            return set()
+
+
+def process_reusable_number(reusable_number):
+    if reusable_number:
+        first_used = reusable_number.get("first_used", None)
+        if first_used is not None:
+            first_used_datetime = datetime.fromtimestamp(first_used)
         else:
-            logger.info("Nenhum perfil deletado identificado.")
-
-        return deleted_profiles
+            first_used_datetime = "N/A"
+    else:
+        first_used_datetime = "N/A"
+    return first_used_datetime
