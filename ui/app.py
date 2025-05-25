@@ -211,6 +211,12 @@ if st.sidebar.button("📩 Automação Gmail"):
 if st.sidebar.button("🚀 Automação TikTok (M1)"):
     st.session_state.current_page = "Auto Tiktok M1"
 
+if st.sidebar.button("🗺️ Google Maps Automation"):
+    st.session_state.current_page = "Google Maps Automation"
+
+if st.sidebar.button("🔍 Gsearch Automation"):
+    st.session_state.current_page = "Gsearch Automation"
+
 # Seção de Administração
 st.sidebar.subheader("Adm")
 if st.sidebar.button("🔑 Gerenciar Credenciais"):
@@ -786,3 +792,11 @@ elif st.session_state.current_page == "Auto Tiktok M1":
         #     st.error("❌ Erro na criação da conta TikTok.")
 
 # ... código existente ...
+
+elif st.session_state.current_page == "Google Maps Automation":
+    st.title("🗺️ Automação Google Maps")
+    # TODO: invoke automations.google_maps_automation.core or placeholder
+
+elif st.session_state.current_page == "Gsearch Automation":
+    st.title("🔍 Automação Gsearch")
+    # TODO: invoke automations.gsearch.core or placeholder
